@@ -3,34 +3,33 @@ use serde::{Serialize, Deserialize};
 use sqlx::postgres::*;
 use sqlx::FromRow;
 use sqlx::prelude::*;
+use sqlx::postgres::{PgPool, PgConnection};
 
 
-
-#[derive(FromRow, Serialize, Deserialize)]
-pub struct User {
-    pub id: Option<i32>,
-    pub email: String,
-    pub username: String,
-    pub password: String,
-    pub created_at: i32,
+pub struct Db {
+    pool: PgPool, 
 }
 
-impl User {
-    pub fn new(email: &str, username: &str, password: &str) -> User {
-        User {
-            id: None,
-            email: email.to_string(), 
-            username: username.to_string(), 
-            password: password.to_string(),
-            created_at: Utc::now().timestamp() as i32
-        }
+impl Db {
+    pub async fn new(db_url: &str) -> sqlx::Result<Self> {
+        let pool = PgPool::new(&db_url).await?;
+        Ok ( Db { pool } )
     }
+
+    //pub async fn listen(self) -> sqlx::Result<()> {
+        //PgListener::from_pool(self)
+            //.listen_all()?;
+    //}
+
+    pub async fn query(table: &str) -> () {  }
 }
+
 
 pub async fn connect(db_url: &str) -> sqlx::Result<PgPool> {
     let pool = PgPool::new(&db_url).await.unwrap();
     Ok(pool)
 }
+
 
 pub async fn clear(pool: &PgPool) -> sqlx::Result<()> {
     sqlx::query!("DROP TABLE IF EXISTS RecordItemLinks CASCADE;")

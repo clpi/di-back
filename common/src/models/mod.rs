@@ -9,6 +9,8 @@ pub mod group;
 pub mod rule;
 pub mod action;
 
+
+
 use chrono::Utc;
 
 pub use user::User;
@@ -17,6 +19,32 @@ pub enum Time {
     Now,
     Tomorrow,
     Yesterday,
+}
+
+#[derive(sqlx::Type)]
+#[sqlx(rename = "permission", rename_all = "lowercase")]
+pub enum Permission {
+    Private,
+    Public,
+    MutualOnly,
+    InviteOnly,
+}
+
+#[derive(sqlx::Type)]
+#[sqlx(rename = "priority", rename_all = "lowercase")]
+pub enum Priority {
+    Lowest,
+    Low,
+    High,
+    Highest,
+}
+
+#[derive(sqlx::Type)]
+#[sqlx(rename = "priority", rename_all = "lowercase")]
+pub enum Status { 
+    Deleted, 
+    Archived, 
+    Active
 }
 
 impl Time {

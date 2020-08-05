@@ -1,5 +1,7 @@
-target/
-.env
+**/target
+**target/
+**/.env
+**.env
 
 
 #Added by cargo

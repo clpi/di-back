@@ -1,8 +1,12 @@
 use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 use super::Time;
+use sqlx::Postgres;
+use sqlx::postgres::{PgPool, PgConnection};
+use sqlx::prelude::*;
 
-#[derive(Default, FromRow, Serialize, Deserialize, Clone)]
+#[derive(FromRow, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct User {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -10,6 +14,65 @@ pub struct User {
     pub email: String,
     pub username: String,
     pub password: String,
-    #[serde(default = "Time::now")]
-    pub created_at: i32,
+    #[serde(default = "Utc::now")]
+    pub created_at: DateTime<Utc>,
 }
+
+impl User {
+    pub fn new(email: String, username: String, password: String) -> User {
+        User {
+            id: None, email, username, password, created_at: Utc::now(),
+        }
+    }
+
+    pub async fn create(pool: &PgPool, user: User) -> sqlx::Result<u32> {
+        let res = sqlx::query("INSERT INTO Users (email, username, password)
+            VALUES ($1, $2, $3)")
+            .bind(user.email)
+            .bind(user.username)
+            .bind(user.password)
+            .execute(pool).await?;
+        Ok(res as u32)
+    }
+
+    pub async fn insert(self, pool: &PgPool) -> sqlx::Result<u32> {
+        let res = sqlx::query("INSERT INTO Users (email, username, password)
+            VALUES ($1, $2, $3)")
+            .bind(self.email)
+            .bind(self.username)
+            .bind(self.password)
+            .execute(pool).await?;
+        Ok(res as u32)
+    }
+
+    pub async fn get_all(pool: &PgPool) -> sqlx::Result<Vec<User>> {
+        let res: Vec<User> = sqlx::query_as::<Postgres, User>("SELECT * FROM Users;")
+            .fetch_all(pool).await?;
+        Ok(res)
+    }
+
+    pub async fn from_id(pool: &PgPool, uid: i32) -> sqlx::Result<User> {
+        let res: User = sqlx::query_as::<Postgres, User>("SELECT * FROM Users WHERE id=$1;")
+            .bind(uid)
+            .fetch_one(pool).await?;
+        Ok(res)
+    }
+
+    pub async fn get_by_username(pool: &PgPool, username: &str) -> sqlx::Result<User> {
+        let res: User = sqlx::query_as::<Postgres, User>("SELECT * FROM Users WHERE username=$1;")
+            .bind(username)
+            .fetch_one(pool).await?;
+        Ok(res)
+    }
+
+    pub async fn delete_by_id(pool: &PgPool, uid: i32) -> sqlx::Result<u32> {
+        let res = sqlx::query("DELETE FROM Users WHERE id=$1;")
+            .bind(uid)
+            .execute(pool).await?;
+        Ok(res as u32)
+    }
+
+}
+
+#[test]
+pub fn create_retrieve_user() -> () {}
