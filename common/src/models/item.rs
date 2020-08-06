@@ -7,16 +7,16 @@ use super::{
     //link::{ItemFieldLink, RecordItemLink},
 };
 
-#[derive(Default, FromRow, Serialize, Deserialize, Clone)]
+#[derive(FromRow, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct Item {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<i32>,
     pub uid: i32,
     pub name: String,
-    #[serde(default = "Status::active")]
+    //#[serde(default = "Status::active")]
     pub status: String,
-    #[serde(default = "Permission::private")]
+    //#[serde(default = "Permission::private")]
     pub permission: String,
     #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,

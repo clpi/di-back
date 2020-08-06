@@ -35,19 +35,19 @@ impl User {
         Ok(res as u32)
     }
 
-    pub async fn insert(self, pool: &PgPool) -> sqlx::Result<u32> {
+    pub async fn insert(self, pool: PgPool) -> sqlx::Result<u32> {
         let res = sqlx::query("INSERT INTO Users (email, username, password)
             VALUES ($1, $2, $3)")
             .bind(self.email)
             .bind(self.username)
             .bind(self.password)
-            .execute(pool).await?;
+            .execute(&pool).await?;
         Ok(res as u32)
     }
 
-    pub async fn get_all(pool: &PgPool) -> sqlx::Result<Vec<User>> {
+    pub async fn get_all(pool: PgPool) -> sqlx::Result<Vec<User>> {
         let res: Vec<User> = sqlx::query_as::<Postgres, User>("SELECT * FROM Users;")
-            .fetch_all(pool).await?;
+            .fetch_all(&pool).await?;
         Ok(res)
     }
 
@@ -58,10 +58,10 @@ impl User {
         Ok(res)
     }
 
-    pub async fn get_by_username(pool: &PgPool, username: &str) -> sqlx::Result<User> {
+    pub async fn get_by_username(pool: PgPool, username: String) -> sqlx::Result<User> {
         let res: User = sqlx::query_as::<Postgres, User>("SELECT * FROM Users WHERE username=$1;")
             .bind(username)
-            .fetch_one(pool).await?;
+            .fetch_one(&pool).await?;
         Ok(res)
     }
 

@@ -6,20 +6,25 @@ use tide::sessions::SessionMiddleware;
 use tide::http::headers::HeaderValue;
 use tide::utils::async_trait;
 use tide::security::{Origin, CorsMiddleware};
+use db::PgPool;
 
 pub use db;
 pub use tide::{
     http::Cookie,
-    Response, StatusCode
+    Response, StatusCode, Request
 };
 
 #[async_std::main]
 async fn main() -> async_std::io::Result<()> {
 
-    let state = AppState { data: "Data".to_string() };
+    tide::log::start();
 
     let db_url = dotenv::var("DATABASE_URL").unwrap();
     let pool = db::connect(&db_url).await.unwrap();
+
+    let state = AppState { 
+        data: "Data".to_string(), 
+        pool: pool.clone() };
 
     db::clear(&pool).await.unwrap();
     db::up(&pool).await.unwrap();
@@ -33,26 +38,87 @@ async fn main() -> async_std::io::Result<()> {
 
     app.with(LogMiddleware::new());
 
-    app.at("/").get(|_| async move { Ok("hello world!") });
+    app.with(SessionMiddleware::new(
+        tide::sessions::MemoryStore::new(),
+        std::env::var("SECRET_KEY").expect("Must be 32 byte key").as_bytes(),
+    ));
 
-    app.at("/auth/signup").get(|_| async move {
-        Ok(Response::new(StatusCode::Ok))
+    app.with(tide::utils::Before(
+        |mut request: tide::Request<AppState>| async move {
+            let session = request.session_mut();
+            let visits: usize = session.get("visits").unwrap_or_default();
+            session.insert("visits", visits + 1).unwrap();
+            request
+        },
+    ));
+    
+
+    app.at("/").get(|mut req: tide::Request<AppState>| async move {
+        Ok("hello world!") 
     });
 
-    app.at("/auth/login").get(|_| async move {
-        let cookie = Cookie::new("Auth", "Token");
+    app.at("/auth/login").post(|mut req: tide::Request<AppState>| async move {
+        let user: User = req.body_json().await.unwrap();
         let mut resp = Response::new(StatusCode::Ok);
-        resp.insert_cookie(cookie); 
+        let pool = req.state().pool.clone();
+        match User::get_by_username(pool, user.username).await {
+            Ok(dbuser) =>
+                if dbuser.password == user.password {
+                    resp.insert_header("Login", "true");
+                    resp.set_body(format!("Signed in {}", dbuser.username));
+                    resp.insert_cookie(Cookie::new("auth", "token"));            
+                } else {
+                    resp.insert_header("Login", "false");
+                    resp.set_body("Incorrect credentials");
+                }
+            Err(_) =>  {
+                resp.insert_header("Login", "false"); 
+                resp.set_body("Incorrect credentials");
+            } 
+        }
         Ok(resp)
     });
 
-    app.at("/user").post(|_| async move {
-        let body = "";
-        Ok(Response::new(StatusCode::Ok))
+    app.at("/auth/signup").post(|mut req: Request<AppState>| async move {
+        let user: User = req.body_json().await.unwrap();
+        let mut resp = Response::new(StatusCode::Ok);
+        let pool = req.state().pool.clone();
+        match user.insert(pool).await {
+            Ok(_) => {
+                let mut resp = Response::new(StatusCode::Ok);
+                resp.insert_header("Register", "true"); //TODO actually implement real resp
+                resp.set_body("Successfully signed up");
+            },
+            Err(_) =>  {
+                let mut resp = Response::new(StatusCode::Unauthorized);
+                resp.insert_header("Register", "false"); 
+                resp.set_body("Could not sign up");
+            },
+        }
+        Ok(resp)
     });
 
-    app.at("/user/:username").get(|req| async move {
+    app.at("/user").post(|mut req: Request<AppState>| async move {
+        let user: User = req.body_json().await.unwrap();
+        Ok(Response::new(StatusCode::Ok))
+    }).get(|req: Request<AppState>| async move {
+        match User::get_all(req.state().pool.clone()).await {
+            Ok(users) => {
+                let mut resp = Response::new(StatusCode::Ok);
+                resp.set_body(serde_json::to_string(&users).unwrap());
+                Ok(resp)
+            },
+            Err(_) => {
+                let mut resp = Response::new(StatusCode::BadRequest);
+                resp.set_body("Could not fetch users");
+                Ok(resp)
+            }
+        }
+    });
+
+    app.at("/user/:username").get(|mut req: Request<AppState>| async move {
         let res = Response::new(200);
+        let username: String = req.param("username").unwrap();
         Ok(Response::new(200))
     });
 
@@ -67,18 +133,21 @@ async fn main() -> async_std::io::Result<()> {
        res.set_body(tide::Body::from_json(&user)?);
        Ok(res)
     });
+    
 
     let user = User::new("keewa@div.is".to_string(), "keewa".to_string(), "d".to_string());
     let chris = User::new("chris@div.is".to_string(), "chris".to_string(), "p".to_string());
+    let test = User::new("test@div.is".to_string(), "test".to_string(), "m".to_string());
 
-    user.insert(&pool).await.unwrap();
-    chris.insert(&pool).await.unwrap();
+    user.insert(pool.clone()).await.unwrap();
+    chris.insert(pool.clone()).await.unwrap();
+    test.insert(pool.clone()).await.unwrap();
 
-    let test = User::get_by_username(&pool, "chris").await.unwrap();
-    let test2 = User::get_all(&pool).await.unwrap();
+    let get_chris = User::get_by_username(pool.clone(), "chris".to_string()).await.unwrap();
+    let get_all = User::get_all(pool).await.unwrap();
 
-    println!("User: {}", serde_json::to_string(&test).unwrap());
-    println!("Users: {}", serde_json::to_string(&test2).unwrap());
+    println!("User: {}", serde_json::to_string(&get_chris).unwrap());
+    println!("Users: {}", serde_json::to_string(&get_all).unwrap());
 
     app.listen("127.0.0.1:3002").await
 
@@ -99,4 +168,5 @@ impl<AppState> RequestExt for tide::Request<AppState> {
 #[derive(Clone)]
 pub struct AppState {
     data: String,
+    pool: PgPool,
 }

@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use sqlx::postgres::*;
 use sqlx::FromRow;
 use sqlx::prelude::*;
-use sqlx::postgres::{PgPool, PgConnection};
+pub use sqlx::postgres::{PgPool, PgConnection};
 
 
 pub struct Db {
