@@ -9,12 +9,6 @@ edition = "2018"
 [dependencies]
 common={path="../common/"}
 db={path="../db/"}
-dotenv="*"
-#tokio
 tide="*"
-async-std = { version = "1.6.0", features = ["attributes"] }
-argonautica="*"
-uuid = { version = "*", features = ["serde", "v4"] }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
-dasp = "*"

@@ -12,11 +12,10 @@ pub struct Db {
 }
 
 impl Db {
-    pub async fn new(db_url: &str) -> sqlx::Result<Self> {
+    pub async fn new() -> sqlx::Result<Self> {
         let options: PgConnectOptions = dotenv::var("DATABASE_URL")
             .expect("DATABASE_URL unset")
             .parse()?;
-        let dbpool = PgPool::connect(db_url).await?;
         let pool = PgPool::connect_with(options).await?;
         Ok ( Db { pool } )
     }

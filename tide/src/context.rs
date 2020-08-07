@@ -1,14 +1,18 @@
 use db::PgPool;
+use common::auth::{get_secret_key, get_jwt_secret};
 
 pub async fn create() -> tide::Result<Context> {
-    let db_url = dotenv::var("DATABASE_URL").unwrap();
-    let db = db::Db::new(db_url.as_str()).await.unwrap()
+    let db = db::Db::new().await.unwrap()
         .clear().await.unwrap()
         .up().await.unwrap();
 
+    let secret_key = get_secret_key().await.unwrap();
+    let jwt_key = get_jwt_secret().await.unwrap();
+
     let state = Context { 
         data: "Data".to_string(), 
-        pool: db.pool.clone() 
+        pool: db.pool.clone(),
+        secret_key, jwt_key
     };
     Ok(state)
 }
@@ -17,4 +21,6 @@ pub async fn create() -> tide::Result<Context> {
 pub struct Context {
     pub data: String,
     pub pool: PgPool,
+    pub secret_key: String,
+    pub jwt_key: String,
 }

@@ -1,6 +1,7 @@
 pub use crate::{Request, Response, StatusCode, Cookie, UserLogin, User};
 use crate::context::Context;
 
+//TODO implement hash verification
 pub async fn login(mut req: Request<Context>) -> tide::Result<Response> {
     let user: UserLogin = req.body_json().await.unwrap();
     let mut resp = Response::new(StatusCode::Ok);

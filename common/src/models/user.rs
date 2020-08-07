@@ -5,6 +5,7 @@ use super::Time;
 use sqlx::Postgres;
 use sqlx::postgres::{PgPool, PgConnection, PgDone};
 use sqlx::prelude::*;
+use crate::auth::{hash_pwd, get_secret_key};
 
 #[derive(FromRow, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
@@ -33,19 +34,23 @@ impl User {
 
     //TODO commit transaction
     pub async fn create(pool: PgPool, user: User) -> sqlx::Result<u32> {
+        let secret = get_secret_key().await.unwrap();
+        let password = hash_pwd(&secret, &user.password).await;
         let res = sqlx::query!(r#"INSERT INTO Users (email, username, password)
-            VALUES ($1, $2, $3)"#, user.email, user.username, user.password)
+            VALUES ($1, $2, $3)"#, user.email, user.username, password)
             .execute(&pool).await?;
         Ok(res.rows_affected() as u32)
     }
 
     //TODO commit transaction
     pub async fn insert(self, pool: PgPool) -> sqlx::Result<u32> {
+        let secret = get_secret_key().await.unwrap();
+        let password = hash_pwd(&secret, &self.password).await;
         let res = sqlx::query("INSERT INTO Users (email, username, password)
             VALUES ($1, $2, $3)")
             .bind(self.email)
             .bind(self.username)
-            .bind(self.password)
+            .bind(password)
             .execute(&pool).await?;
         Ok(res.rows_affected() as u32)
     }
@@ -75,6 +80,12 @@ impl User {
             .bind(uid)
             .fetch_one(&pool).await?;
         Ok(res)
+    }
+
+    pub async fn get_count(pool: PgPool) -> sqlx::Result<i32> {
+        let (count,): (i32,) = sqlx::query_as("SELECT COUNT(*) FROM Users")
+            .fetch_one(&pool).await?;
+        Ok(count)
     }
 
 }
