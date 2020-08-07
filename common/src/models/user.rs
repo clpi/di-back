@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 use super::Time;
 use sqlx::Postgres;
-use sqlx::postgres::{PgPool, PgConnection};
+use sqlx::postgres::{PgPool, PgConnection, PgDone};
 use sqlx::prelude::*;
 
 #[derive(FromRow, Serialize, Deserialize, Clone)]
@@ -18,6 +18,12 @@ pub struct User {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct UserLogin {
+    pub username: String,
+    pub password: String,
+}
+
 impl User {
     pub fn new(email: String, username: String, password: String) -> User {
         User {
@@ -25,16 +31,15 @@ impl User {
         }
     }
 
-    pub async fn create(pool: &PgPool, user: User) -> sqlx::Result<u32> {
-        let res = sqlx::query("INSERT INTO Users (email, username, password)
-            VALUES ($1, $2, $3)")
-            .bind(user.email)
-            .bind(user.username)
-            .bind(user.password)
-            .execute(pool).await?;
-        Ok(res as u32)
+    //TODO commit transaction
+    pub async fn create(pool: PgPool, user: User) -> sqlx::Result<u32> {
+        let res = sqlx::query!(r#"INSERT INTO Users (email, username, password)
+            VALUES ($1, $2, $3)"#, user.email, user.username, user.password)
+            .execute(&pool).await?;
+        Ok(res.rows_affected() as u32)
     }
 
+    //TODO commit transaction
     pub async fn insert(self, pool: PgPool) -> sqlx::Result<u32> {
         let res = sqlx::query("INSERT INTO Users (email, username, password)
             VALUES ($1, $2, $3)")
@@ -42,7 +47,7 @@ impl User {
             .bind(self.username)
             .bind(self.password)
             .execute(&pool).await?;
-        Ok(res as u32)
+        Ok(res.rows_affected() as u32)
     }
 
     pub async fn get_all(pool: PgPool) -> sqlx::Result<Vec<User>> {
@@ -58,18 +63,18 @@ impl User {
         Ok(res)
     }
 
-    pub async fn get_by_username(pool: PgPool, username: String) -> sqlx::Result<User> {
+    pub async fn from_username(pool: PgPool, username: String) -> sqlx::Result<User> {
         let res: User = sqlx::query_as::<Postgres, User>("SELECT * FROM Users WHERE username=$1;")
             .bind(username)
             .fetch_one(&pool).await?;
         Ok(res)
     }
 
-    pub async fn delete_by_id(pool: &PgPool, uid: i32) -> sqlx::Result<u32> {
-        let res = sqlx::query("DELETE FROM Users WHERE id=$1;")
+    pub async fn delete_by_id(pool: PgPool, uid: i32) -> sqlx::Result<i32> {
+        let res: i32 = sqlx::query_scalar("DELETE FROM Users WHERE id=$1 RETURNING id")
             .bind(uid)
-            .execute(pool).await?;
-        Ok(res as u32)
+            .fetch_one(&pool).await?;
+        Ok(res)
     }
 
 }

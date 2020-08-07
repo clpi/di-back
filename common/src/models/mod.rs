@@ -13,7 +13,7 @@ pub mod action;
 
 use chrono::Utc;
 
-pub use user::User;
+pub use user::*;
 
 pub enum Time {
     Now,

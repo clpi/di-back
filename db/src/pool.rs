@@ -4,88 +4,98 @@ use sqlx::postgres::*;
 use sqlx::FromRow;
 use sqlx::prelude::*;
 pub use sqlx::postgres::{PgPool, PgConnection};
+use walkdir::WalkDir;
 
-
+#[derive(Clone)]
 pub struct Db {
-    pool: PgPool, 
+    pub pool: PgPool, 
 }
 
 impl Db {
     pub async fn new(db_url: &str) -> sqlx::Result<Self> {
-        let pool = PgPool::new(&db_url).await?;
+        let options: PgConnectOptions = dotenv::var("DATABASE_URL")
+            .expect("DATABASE_URL unset")
+            .parse()?;
+        let dbpool = PgPool::connect(db_url).await?;
+        let pool = PgPool::connect_with(options).await?;
         Ok ( Db { pool } )
     }
 
-    //pub async fn listen(self) -> sqlx::Result<()> {
-        //PgListener::from_pool(self)
-            //.listen_all()?;
-    //}
-
     pub async fn query(table: &str) -> () {  }
+
+    pub async fn listen(self, channel: &str) -> sqlx::Result<()> {
+        let mut listener = PgListener::connect_with(&self.pool).await?;
+        listener.listen(channel).await?;
+        loop  {
+            let notif = listener.recv().await?;
+            println!("Listener received: {:?}", notif.payload());
+            if notif.payload() == "break" { break }
+        }
+        Ok(())
+    }
+
+    pub async fn clear(self) -> sqlx::Result<Self> {
+        sqlx::query!("DROP TABLE IF EXISTS RecordItemLinks CASCADE;")
+            .execute(&self.pool).await?;
+        sqlx::query!("DROP TABLE IF EXISTS Items CASCADE;")
+            .execute(&self.pool).await?;
+        sqlx::query!("DROP TABLE IF EXISTS Records CASCADE;")
+            .execute(&self.pool).await?;
+        sqlx::query!("DROP TABLE IF EXISTS Users CASCADE;")
+            .execute(&self.pool).await?;
+        Ok(self)
+    }
+
+    pub async fn up(self) -> sqlx::Result<Self> {
+
+        sqlx::query_file_unchecked!("sql/tables/users.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/records.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/fields.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/groups.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/items.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/entrytypes.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/userrecordlinks.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/recorditemlinks.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/itemfieldlinks.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/fieldentrylinks.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/usergrouplinks.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/userinfo.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/entryentries.sql")
+            .execute(&self.pool).await.unwrap();
+
+        sqlx::query_file_unchecked!("sql/tables/fieldentries.sql")
+            .execute(&self.pool).await.unwrap();
+
+        Ok(self)
+    }
 }
 
 
-pub async fn connect(db_url: &str) -> sqlx::Result<PgPool> {
-    let pool = PgPool::new(&db_url).await.unwrap();
-    Ok(pool)
-}
 
 
-pub async fn clear(pool: &PgPool) -> sqlx::Result<()> {
-    sqlx::query!("DROP TABLE IF EXISTS RecordItemLinks CASCADE;")
-        .execute(pool).await?;
-    sqlx::query!("DROP TABLE IF EXISTS Items CASCADE;")
-        .execute(pool).await?;
-    sqlx::query!("DROP TABLE IF EXISTS Records CASCADE;")
-        .execute(pool).await?;
-    sqlx::query!("DROP TABLE IF EXISTS Users CASCADE;")
-        .execute(pool).await?;
-    Ok(())
-}
 
-pub async fn up(pool: &PgPool) -> sqlx::Result<()> {
 
-    sqlx::query_file_unchecked!("sql/tables/users.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/records.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/fields.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/groups.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/items.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/entrytypes.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/userrecordlinks.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/recorditemlinks.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/itemfieldlinks.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/fieldentrylinks.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/usergrouplinks.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/userinfo.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/entryentries.sql")
-        .execute(pool).await.unwrap();
-
-    sqlx::query_file_unchecked!("sql/tables/fieldentries.sql")
-        .execute(pool).await.unwrap();
-
-    Ok(())
-}

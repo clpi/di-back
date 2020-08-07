@@ -15,6 +15,6 @@ DELETE FROM Actions;
 DELETE FROM Rules;
 DELETE FROM Conditions;
 DELETE FROM UserRecordLinks;
-DELETE FROM UserRelationships (
-DELETE FROM RecordRelationships (
-DELETE FROM ItemRelationships (
+DELETE FROM UserRelationships;
+DELETE FROM RecordRelationships;
+DELETE FROM ItemRelationships;

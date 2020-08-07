@@ -15,6 +15,6 @@ DROP TABLE Actions;
 DROP TABLE Rules;
 DROP TABLE Conditions;
 DROP TABLE UserRecordLinks;
-DROP TABLE UserRelationships (
-DROP TABLE RecordRelationships (
-DROP TABLE ItemRelationships (
+DROP TABLE UserRelationships;
+DROP TABLE RecordRelationships;
+DROP TABLE ItemRelationships;
