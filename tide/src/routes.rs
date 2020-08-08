@@ -28,7 +28,7 @@ pub async fn set(mut app: tide::Server<Context>) -> tide::Result<tide::Server<Co
     });
 
     app.at("/user").post(|req: Request<Context>| async move {
-        Ok(auth::signup(req).await?)
+        Ok("hello")
     }).get(|req: Request<Context>| async move {
         Ok(user::get_all(req).await?)
     });

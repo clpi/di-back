@@ -9,9 +9,20 @@ pub mod group;
 pub mod rule;
 pub mod action;
 
+pub use self::{
+    user::User,
+    record::Record,
+    item::Item,
+};
 
-
+pub use sqlx::FromRow;
 use chrono::Utc;
+pub use serde::{Deserialize, Serialize};
+
+pub trait Model {
+    fn table() -> String;
+}
+
 
 pub use user::*;
 

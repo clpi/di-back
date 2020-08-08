@@ -590,7 +590,6 @@ version = "0.1.0"
 dependencies = [
  "argonautica",
  "chrono",
- "db",
  "dotenv",
  "jsonwebtoken",
  "serde",
@@ -707,6 +706,7 @@ version = "0.1.0"
 dependencies = [
  "async-std",
  "chrono",
+ "common",
  "dotenv",
  "fake",
  "log 0.4.11",

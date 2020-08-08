@@ -1,4 +1,5 @@
 pub use crate::{Request, Response, StatusCode, Cookie, UserLogin, User};
+use common::auth::*;
 use crate::context::Context;
 
 //TODO implement hash verification
@@ -8,7 +9,7 @@ pub async fn login(mut req: Request<Context>) -> tide::Result<Response> {
     let pool = req.state().pool.clone();
     match User::from_username(pool, user.username).await {
         Ok(dbuser) =>
-            if dbuser.password == user.password {
+            if verify_pwd(&req.state().secret_key, &user.password, &dbuser.password).await {
                 resp.insert_header("Login", "true");
                 resp.set_body(format!("Signed in {}", dbuser.username));
                 resp.insert_cookie(Cookie::new("auth", "token"));            
@@ -25,7 +26,8 @@ pub async fn login(mut req: Request<Context>) -> tide::Result<Response> {
 }
 
 pub async fn signup(mut req: Request<Context>) -> tide::Result<Response> {
-    let user: User = req.body_json().await.unwrap();
+    let mut user: User = req.body_json().await.unwrap();
+    user.password = hash_pwd(&req.state().secret_key, &user.password).await;
     let mut resp = Response::new(StatusCode::Ok);
     let pool = req.state().pool.clone();
     match user.insert(pool).await {

@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 dotenv="*"
+common = { path ="../common/" }
 sqlx = { version = "0.4.0-beta.1", default-features = false, features = [ "postgres", "json", "uuid", "chrono", "runtime-async-std", "macros" ] }
 async-std = { version = "1.6.0", features = ["attributes"] }
 #tokio

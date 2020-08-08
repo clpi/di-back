@@ -2,7 +2,7 @@ use sqlx::{Postgres, FromRow, postgres::*};
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use super::{
-    Status, Permission,
+    Status, Permission, Model,
     user::User, item::Item,
     //link::{UserRecordLink, RecordItemLink},
 };
@@ -24,6 +24,10 @@ pub struct Record {
     //pub permission: Permission,
     #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+}
+
+impl Model for Record {
+    fn table() -> String { String::from("Records") }
 }
 
 impl Record {

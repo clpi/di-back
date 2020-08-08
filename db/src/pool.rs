@@ -20,8 +20,6 @@ impl Db {
         Ok ( Db { pool } )
     }
 
-    pub async fn query(table: &str) -> () {  }
-
     pub async fn listen(self, channel: &str) -> sqlx::Result<()> {
         let mut listener = PgListener::connect_with(&self.pool).await?;
         listener.listen(channel).await?;
@@ -94,6 +92,9 @@ impl Db {
 }
 
 
+impl Drop for Db {
+    fn drop() {}
+}
 
 
 

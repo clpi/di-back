@@ -13,7 +13,7 @@ pub async fn set(mut app: tide::Server<Context>) -> tide::Result<tide::Server<Co
 
     app.with(SessionMiddleware::new(
         tide::sessions::MemoryStore::new(),
-        std::env::var("SECRET_KEY").expect("Must be 32 byte key").as_bytes(),
+        std::env::var("SESSION_SECRET").expect("Must be 32 byte key").as_bytes(),
     ));
 
     app.with(tide::utils::Before(

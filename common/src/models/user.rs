@@ -1,3 +1,4 @@
+use super::Model;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
@@ -32,27 +33,27 @@ impl User {
         }
     }
 
+    //pub async fn query() -> QueryBuilder<User> {}
+
     //TODO commit transaction
-    pub async fn create(pool: PgPool, user: User) -> sqlx::Result<u32> {
-        let secret = get_secret_key().await.unwrap();
-        let password = hash_pwd(&secret, &user.password).await;
-        let res = sqlx::query!(r#"INSERT INTO Users (email, username, password)
-            VALUES ($1, $2, $3)"#, user.email, user.username, password)
-            .execute(&pool).await?;
-        Ok(res.rows_affected() as u32)
+    pub async fn create(pool: PgPool, user: User) -> sqlx::Result<i32> {
+        let query = sqlx::query!("INSERT INTO Users (email, username, password)
+            VALUES ($1, $2, $3)", user.email, user.username, user.password);
+        let res = pool.execute(query).await?;
+        Ok(res.rows_affected() as i32)
     }
 
     //TODO commit transaction
     pub async fn insert(self, pool: PgPool) -> sqlx::Result<u32> {
-        let secret = get_secret_key().await.unwrap();
-        let password = hash_pwd(&secret, &self.password).await;
-        let res = sqlx::query("INSERT INTO Users (email, username, password)
+        let mut conn = pool.acquire().await?;
+        let query = sqlx::query("INSERT INTO Users (email, username, password)
             VALUES ($1, $2, $3)")
             .bind(self.email)
             .bind(self.username)
-            .bind(password)
+            .bind(self.password)
             .execute(&pool).await?;
-        Ok(res.rows_affected() as u32)
+        //let res = pool.execute(query).await?;
+        Ok(query.rows_affected() as u32)
     }
 
     pub async fn get_all(pool: PgPool) -> sqlx::Result<Vec<User>> {
@@ -92,3 +93,7 @@ impl User {
 
 #[test]
 pub fn create_retrieve_user() -> () {}
+
+impl Model for User {
+    fn table() -> String { String::from("Users") }
+}

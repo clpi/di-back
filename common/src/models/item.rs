@@ -2,7 +2,7 @@ use sqlx::{Postgres, FromRow, postgres::*};
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use super::{
-    Status, Permission, Priority,
+    Status, Permission, Priority, Model,
     record::Record,
     //link::{ItemFieldLink, RecordItemLink},
 };
@@ -20,4 +20,8 @@ pub struct Item {
     pub permission: String,
     #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+}
+
+impl Model for Item {
+    fn table() -> String { String::from("Items") }
 }
