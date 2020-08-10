@@ -93,7 +93,9 @@ impl Db {
 
 
 impl Drop for Db {
-    fn drop() {}
+    fn drop(&mut self) {
+        println!("Closing db...");
+    }
 }
 
 

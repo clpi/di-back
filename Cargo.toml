@@ -1,4 +1,32 @@
 [workspace]
+cargo-features=["named-profiles"]
 members = [
-  "tide", "warp", "db", "common", "learner", "gotham", "app"
+  "api",
+  "api/actix", 
+  "api/tide", 
+  "api/warp", 
+  "api/hyper",
+  "api/gotham", 
+  "db", 
+  "common", 
+  "common/div-derive",
+  "ml", 
+  "lang", 
+  "app", 
 ]
+
+[alias]
+b = "build"
+c = "check"
+t = "test"
+tv = ["test", "--", "--nocapture"]
+rr = ["run --release"]
+rt = ["run --bin dt"]
+dd = "--bin dt"
+rtg = ["run", "--bin", "tide", "--features", "gql"]
+rw = ["run", "--bin", "warp"]
+rwg = ["run", "--bin", "warp", "--features", "gql"]
+ra = ["run", "--bin", "actix"]
+rag = ["run", "--bin", "actix", "--features", "gql"]
+rh = ["run", "--bin", "hyper"]
+rg = ["run", "--bin", "gotham"]

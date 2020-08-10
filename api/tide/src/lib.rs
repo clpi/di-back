@@ -1,7 +1,7 @@
-mod handlers;
-mod middleware;
-mod context;
-mod routes;
+pub mod handlers;
+pub mod middleware;
+pub mod context;
+pub mod routes;
 
 pub use common::models::{User, UserLogin};
 pub use db;

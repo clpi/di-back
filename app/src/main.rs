@@ -1,5 +1,9 @@
-#[async_std::main]
-async fn main() -> async_std::io::Result<()> {
-    divt::run("127.0.0.1", "3002").await.unwrap();
-    Ok(())
-}
+//extern crate divt;
+
+//#[async_std::main]
+//async fn main() -> async_std::io::Result<()> {
+    //divt::run("127.0.0.1", "3002").await.unwrap();
+    //Ok(())
+//}
+//
+pub fn main() {}

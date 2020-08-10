@@ -1,0 +1,25 @@
+[package]
+name = "divt"
+version = "0.1.0"
+authors = ["Chris P <chrisp1877@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+common={path="../../common/", optional=false}
+db={path="../../db/", optional=false}
+tide={version="*", optional=false}
+async-std={version="*", features=["attributes"], optional=false}
+serde = { version = "*", features = ["derive"], optional=false }
+serde_json = { version="*", optional=false }
+async-graphql-tide= {version="*", optional=true}
+async-graphql= {version="*", optional=true}
+
+[features]
+default=[]
+gql=["async-graphql", "async-graphql-tide"]
+
+[[bin]]
+name="dt"
+path="./src/bin/main.rs"

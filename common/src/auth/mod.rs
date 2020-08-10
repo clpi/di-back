@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use jsonwebtoken::{encode, decode, Header, EncodingKey, DecodingKey, Validation};
+//use jsonwebtoken::{encode, decode, Header, EncodingKey, DecodingKey, Validation};
 use jsonwebtoken::errors::Result as JWTResult;
 use crate::models::User;
 use chrono::{Utc, Duration};
@@ -58,27 +58,27 @@ pub async fn get_secret_key() -> Result<String, std::io::Error>  {
 }
 
 
-pub fn encode_jwt(secret: &String, user: &User) -> Result<String, String> {
-    match encode(
-        &Header::default(),
-        &Claims::new(user.id.unwrap()),
-        &EncodingKey::from_secret(secret.as_ref()),
-    ) {
-        Ok(jwt) => Ok(jwt),
-        Err(_) => Err(String::from("Couldn't encode")),
-    }
-}
+//pub fn encode_jwt(secret: &String, user: &User) -> Result<String, String> {
+    //match encode(
+        //&Header::default(),
+        //&Claims::new(user.id.unwrap()),
+        //&EncodingKey::from_secret(secret.as_ref()),
+    //) {
+        //Ok(jwt) => Ok(jwt),
+        //Err(_) => Err(String::from("Couldn't encode")),
+    //}
+//}
 
-pub fn decode_jwt(secret: &String, token: &String) -> JWTResult<Claims> {
-    match decode::<Claims>(
-        token.trim_start_matches("MEMT "),
-        &DecodingKey::from_secret(secret.as_ref()),
-        &Validation::default(),
-    ) {
-        Ok(jwt) => Ok(jwt.claims),
-        Err(err) => Err(err),
-    }
-}
+//pub fn decode_jwt(secret: &String, token: &String) -> JWTResult<Claims> {
+    //match decode::<Claims>(
+        //token.trim_start_matches("MEMT "),
+        //&DecodingKey::from_secret(secret.as_ref()),
+        //&Validation::default(),
+    //) {
+        //Ok(jwt) => Ok(jwt.claims),
+        //Err(err) => Err(err),
+    //}
+//}
 
 pub async fn get_jwt_secret() -> Result<String, std::io::Error> {
     Ok(dotenv::var("JWT_SECRET")

@@ -1,0 +1,25 @@
+[package]
+name = "divh"
+version = "0.1.0"
+authors = ["Chris P <chrisp1877@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+#nlp={path="../../../ml/nlp"}
+hyper={version="*", optional=false}
+scraper={version="*", optional=false}
+select={version="*", optional=false}
+reqwest={version="*", optional=false}
+tokio = { version = "0.2", features = ["full"] , optional=false}
+common={path="../../common/", optional=false}
+db={path="../../db/", optional=false}
+serde={version="*", features=["derive"], optional=false}
+serde_json={version="*", optional=false}
+#oauth2 = { version = "3.0", features = ["futures-03"], default-features = false }
+#futures = "0.3"
+chrono = {version="*", features=["serde"], optional=false}
+
+[features]
+default=[]
