@@ -84,3 +84,5 @@ required-features=["hyper"]
 [alias]
 divt=["run --bin tide --features tide"]
 dt=["run", "--bin", "tide", "--features", "tide"]
+dvt="run --bin tide --features tide"
+r="run --bin tide --features tide"
